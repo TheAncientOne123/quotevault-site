@@ -16,6 +16,11 @@ function formatDate(iso: string): string {
   });
 }
 
+function getAuthorDisplay(author: string | null, language: string | null): string {
+  if (author?.trim()) return author.trim();
+  return language === "es" ? "Anónimo" : "Anonymous";
+}
+
 const SNIPPET_LENGTH = 180;
 
 export function QuoteCard({ quote, onClick }: QuoteCardProps) {
@@ -59,9 +64,7 @@ export function QuoteCard({ quote, onClick }: QuoteCardProps) {
       <p className="text-sm text-[var(--muted)] leading-relaxed line-clamp-3 whitespace-pre-wrap">
         {snippet}
       </p>
-      {quote.author && (
-        <p className="mt-2 text-xs text-[var(--muted)] italic">— {quote.author}</p>
-      )}
+      <p className="mt-2 text-xs text-[var(--muted)] italic">— {getAuthorDisplay(quote.author, quote.language)}</p>
     </article>
   );
 }

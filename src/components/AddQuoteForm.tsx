@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { sanitizeText } from "@/lib/sanitize";
+import { useTags } from "@/lib/hooks/useTags";
 
 export type QuoteFormData = {
   title: string;
@@ -25,9 +26,14 @@ export function AddQuoteForm({ onSubmit, onSuccess, compact, initialData }: AddQ
   const [language, setLanguage] = useState<string>(initialData?.language ?? "");
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>(initialData?.hashtags ?? []);
+  const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
+  const hashtagInputRef = useRef<HTMLInputElement>(null);
+  const hashtagSuggestionsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const isEdit = Boolean(initialData);
+
+  const { tags: tagSuggestions } = useTags(hashtagInput || " ", language);
 
   const handlePaste = (e: React.ClipboardEvent, setter: (v: string) => void) => {
     e.preventDefault();
@@ -42,11 +48,52 @@ export function AddQuoteForm({ onSubmit, onSuccess, compact, initialData }: AddQ
       .filter(Boolean);
     setHashtags((prev) => [...new Set([...prev, ...parsed])]);
     setHashtagInput("");
+    setShowHashtagSuggestions(false);
+  };
+
+  const addTagFromSuggestion = (name: string) => {
+    const n = name.toLowerCase().replace(/^#/, "").trim();
+    if (n && !hashtags.includes(n)) {
+      setHashtags((prev) => [...prev, n]);
+    }
+    setHashtagInput("");
+    setShowHashtagSuggestions(false);
   };
 
   const removeHashtag = (t: string) => {
     setHashtags((prev) => prev.filter((x) => x !== t));
   };
+
+  const handleHashtagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const parsed = hashtagInput
+        .split(/[\s,#]+/)
+        .map((t) => t.replace(/^#/, "").toLowerCase().trim())
+        .filter(Boolean);
+      if (parsed.length) {
+        addHashtag();
+      } else if (tagSuggestions.length) {
+        addTagFromSuggestion(tagSuggestions[0]);
+      } else {
+        addHashtag();
+      }
+    }
+  };
+
+  useEffect(() => {
+    function handleClickOutside(ev: MouseEvent) {
+      const target = ev.target as Node;
+      if (
+        hashtagSuggestionsRef.current?.contains(target) ||
+        hashtagInputRef.current?.contains(target)
+      )
+        return;
+      setShowHashtagSuggestions(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +198,7 @@ export function AddQuoteForm({ onSubmit, onSuccess, compact, initialData }: AddQ
           <option value="es">Español</option>
         </select>
       </div>
-      <div>
+      <div className="relative">
         <label htmlFor="hashtags" className="mb-1 block text-xs text-[var(--muted)]">
           Hashtags (type and press Enter)
         </label>
@@ -173,16 +220,16 @@ export function AddQuoteForm({ onSubmit, onSuccess, compact, initialData }: AddQ
             </span>
           ))}
           <input
+            ref={hashtagInputRef}
             id="hashtags"
             type="text"
             value={hashtagInput}
-            onChange={(e) => setHashtagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addHashtag();
-              }
+            onChange={(e) => {
+              setHashtagInput(e.target.value);
+              setShowHashtagSuggestions(true);
             }}
+            onFocus={() => setShowHashtagSuggestions(true)}
+            onKeyDown={handleHashtagKeyDown}
             onPaste={(e) => {
               e.preventDefault();
               const text = e.clipboardData.getData("text/plain");
@@ -196,6 +243,26 @@ export function AddQuoteForm({ onSubmit, onSuccess, compact, initialData }: AddQ
             className="flex-1 min-w-[120px] rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-stone-400"
           />
         </div>
+        {showHashtagSuggestions && tagSuggestions.length > 0 && (
+          <div
+            ref={hashtagSuggestionsRef}
+            className="absolute left-0 top-full z-10 mt-1 max-h-40 w-64 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--card-bg)] shadow-lg"
+          >
+            {tagSuggestions
+              .filter((t) => !hashtags.includes(t))
+              .slice(0, 10)
+              .map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => addTagFromSuggestion(t)}
+                  className="block w-full px-3 py-2 text-left text-sm hover:bg-[var(--border)]"
+                >
+                  #{t}
+                </button>
+              ))}
+          </div>
+        )}
       </div>
       {error && (
         <p className="text-sm text-red-600" role="alert">

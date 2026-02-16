@@ -20,6 +20,11 @@ function formatDate(iso: string): string {
   });
 }
 
+function getAuthorDisplay(author: string | null, language: string | null): string {
+  if (author?.trim()) return author.trim();
+  return language === "es" ? "Anónimo" : "Anonymous";
+}
+
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
   const selector =
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -79,7 +84,8 @@ export function QuoteDetailModal({
 
   const handleCopy = async () => {
     if (!quote) return;
-    const text = `${quote.title}\n\n"${quote.content}"${quote.author ? ` — ${quote.author}` : ""}`;
+    const authorDisplay = getAuthorDisplay(quote.author, quote.language);
+    const text = `${quote.title}\n\n"${quote.content}" — ${authorDisplay}`;
     await navigator.clipboard.writeText(text);
   };
 
@@ -155,11 +161,9 @@ export function QuoteDetailModal({
                   ))}
                 </div>
               )}
-              {quote.author && (
-                <p className="mt-4 text-sm italic text-[var(--muted)]">
-                  — {quote.author}
-                </p>
-              )}
+              <p className="mt-4 text-sm italic text-[var(--muted)]">
+                — {getAuthorDisplay(quote.author, quote.language)}
+              </p>
             </div>
             <div className="flex flex-wrap gap-3 border-t border-[var(--border)] p-4">
               <button
