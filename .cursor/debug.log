@@ -1,0 +1,10 @@
+{"location":"api/quotes/route.ts:GET","message":"GET /api/quotes entry","data":{"hypothesisId":"A,B,C"},"timestamp":1771216272794}
+{"location":"api/quotes/route.ts:pre-findMany","message":"Before prisma.quote.findMany","data":{"hypothesisId":"A,B,C","hasDbUrl":true},"timestamp":1771216272796}
+{"location":"api/quotes/route.ts:POST","message":"POST /api/quotes entry","data":{"hypothesisId":"A,B,C,D,E"},"timestamp":1771216352038}
+{"location":"api/quotes/route.ts:pre-create","message":"Before prisma.quote.create","data":{"hypothesisId":"D,E","hasDbUrl":true},"timestamp":1771216352041}
+{"location":"api/quotes/route.ts:GET","message":"GET /api/quotes entry","data":{"hypothesisId":"A,B,C"},"timestamp":1771216352074}
+{"location":"api/quotes/route.ts:pre-findMany","message":"Before prisma.quote.findMany","data":{"hypothesisId":"A,B,C","hasDbUrl":true},"timestamp":1771216352075}
+{"location":"api/quotes/route.ts:GET","message":"GET /api/quotes entry","data":{"hypothesisId":"A,B,C"},"timestamp":1771216352101}
+{"location":"api/quotes/route.ts:pre-findMany","message":"Before prisma.quote.findMany","data":{"hypothesisId":"A,B,C","hasDbUrl":true},"timestamp":1771216352102}
+{"location":"api/quotes/route.ts:GET","message":"GET /api/quotes entry","data":{"hypothesisId":"A,B,C"},"timestamp":1771217002690}
+{"location":"api/quotes/route.ts:pre-findMany","message":"Before prisma.quote.findMany","data":{"hypothesisId":"A,B,C","hasDbUrl":true},"timestamp":1771217002691}

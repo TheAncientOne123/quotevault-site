@@ -1,65 +1,137 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
+import { SearchSection } from "@/components/SearchSection";
+import { ResultsPanel } from "@/components/ResultsPanel";
+import { QuoteDetailModal } from "@/components/QuoteDetailModal";
+import { AddQuoteModal } from "@/components/AddQuoteModal";
+import { EditQuoteModal } from "@/components/EditQuoteModal";
+import { useQuotes } from "@/lib/hooks/useQuotes";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import type { QuoteCard as QuoteCardType } from "@/types/quote";
+
+const DEBOUNCE_MS = 200;
 
 export default function Home() {
+  const [q, setQ] = useState("");
+  const [author, setAuthor] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [languageFilter, setLanguageFilter] = useState<string>("");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  const [editingQuote, setEditingQuote] = useState<QuoteCardType | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
+  const debouncedQ = useDebounce(q, DEBOUNCE_MS);
+  const debouncedAuthor = useDebounce(author, DEBOUNCE_MS);
+
+  const {
+    items,
+    hasMore,
+    loadMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    mutate,
+  } = useQuotes(debouncedQ, debouncedAuthor, selectedTags, languageFilter, sort);
+
+  const selectedQuote = items.find((qu) => qu.id === selectedQuoteId) ?? null;
+
+  const clearFilters = () => {
+    setQ("");
+    setAuthor("");
+    setSelectedTags([]);
+    setLanguageFilter("");
+  };
+
+  const handleAddQuote = async (data: {
+    title: string;
+    content: string;
+    author: string;
+    language: string;
+    hashtags: string[];
+  }) => {
+    const res = await fetch("/api/quotes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: data.title,
+        content: data.content,
+        author: data.author || undefined,
+        language: data.language || undefined,
+        hashtags: data.hashtags,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to add quote");
+    }
+    await mutate();
+  };
+
+  const handleDeleteQuote = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/quotes/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      toast.success("Quote deleted");
+      await mutate();
+      setSelectedQuoteId(null);
+    },
+    [mutate]
+  );
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <div className="w-full max-w-[1600px] mx-auto px-4 pb-6 sm:px-6">
+        <SearchSection
+          q={q}
+          onQChange={setQ}
+          author={author}
+          onAuthorChange={setAuthor}
+          selectedTags={selectedTags}
+          onTagsChange={setSelectedTags}
+          languageFilter={languageFilter}
+          onLanguageFilterChange={setLanguageFilter}
+          sort={sort}
+          onSortChange={setSort}
+          onClearFilters={clearFilters}
+          onAddClick={() => setAddModalOpen(true)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <div className="mt-4">
+          <ResultsPanel
+            items={items}
+            isLoading={isLoading}
+            isLoadingMore={!!isLoadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            onSelectQuote={setSelectedQuoteId}
+            error={error}
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
+
+      <QuoteDetailModal
+        quote={selectedQuote}
+        onClose={() => setSelectedQuoteId(null)}
+        onDelete={handleDeleteQuote}
+        onEdit={setEditingQuote}
+      />
+
+      <EditQuoteModal
+        open={!!editingQuote}
+        quote={editingQuote}
+        onClose={() => setEditingQuote(null)}
+        onSuccess={() => mutate()}
+      />
+
+      <AddQuoteModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSubmit={handleAddQuote}
+        onSuccess={() => mutate()}
+      />
     </div>
   );
 }

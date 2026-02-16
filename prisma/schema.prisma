@@ -1,0 +1,33 @@
+// QuoteVault - Prisma Schema
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  title     String
+  content   String
+  author    String?
+  language  String?  // "en" | "es"
+  tags      Tag[]
+  @@index([createdAt])
+}
+
+model Tag {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  quotes Quote[]
+
+  @@map("tags")
+}
+
+// Prisma handles many-to-many with implicit join table QuoteTag
+// We use @map to clarify the relation
