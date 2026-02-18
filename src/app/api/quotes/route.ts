@@ -8,9 +8,14 @@ import {
   sanitizeAuthor,
   parseHashtags,
 } from "@/lib/sanitize";
+import { getSession } from "@/lib/auth/session";
 
-// POST /api/quotes - Create a new quote
+// POST /api/quotes - Create a new quote (admin only)
 export async function POST(request: NextRequest) {
+  const session = getSession(request.headers.get("cookie"));
+  if (!session?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await request.json();
     const parsed = createQuoteSchema.safeParse(body);

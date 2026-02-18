@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { QuoteCard } from "@/components/QuoteCard";
 import type { QuoteCard as QuoteCardType } from "@/types/quote";
 
@@ -12,7 +13,18 @@ interface ResultsPanelProps {
   onLoadMore: () => void;
   onSelectQuote: (id: string) => void;
   error: Error | null;
+  animateCards?: boolean;
+  emptyStateMessage?: string;
 }
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.04, duration: 0.3, ease: "easeOut" as const },
+  }),
+};
 
 export function ResultsPanel({
   items,
@@ -22,6 +34,8 @@ export function ResultsPanel({
   onLoadMore,
   onSelectQuote,
   error,
+  animateCards = false,
+  emptyStateMessage,
 }: ResultsPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -81,18 +95,33 @@ export function ResultsPanel({
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-[var(--muted)]">No quotes found</p>
             <p className="mt-1 text-xs text-[var(--muted)]/80">
-              Try different search terms or add a new quote
+              {emptyStateMessage ?? "Try different search terms or add a new quote"}
             </p>
           </div>
         ) : (
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
-            {items.map((quote) => (
-              <QuoteCard
-                key={quote.id}
-                quote={quote}
-                onClick={() => onSelectQuote(quote.id)}
-              />
-            ))}
+            {items.map((quote, i) =>
+              animateCards ? (
+                <motion.div
+                  key={quote.id}
+                  custom={i}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <QuoteCard
+                    quote={quote}
+                    onClick={() => onSelectQuote(quote.id)}
+                  />
+                </motion.div>
+              ) : (
+                <QuoteCard
+                  key={quote.id}
+                  quote={quote}
+                  onClick={() => onSelectQuote(quote.id)}
+                />
+              )
+            )}
           </div>
         )}
 

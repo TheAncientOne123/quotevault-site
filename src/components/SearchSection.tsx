@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VisitorModeTabs } from "@/components/VisitorModeTabs";
 import { useTags } from "@/lib/hooks/useTags";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
@@ -24,7 +25,11 @@ interface SearchSectionProps {
   sort: "newest" | "oldest";
   onSortChange: (s: "newest" | "oldest") => void;
   onClearFilters: () => void;
-  onAddClick: () => void;
+  onAddClick?: () => void;
+  showAddButton?: boolean;
+  hideTitle?: boolean;
+  hideThemeToggle?: boolean;
+  showModeTabs?: boolean;
 }
 
 function FilterIcon({ className }: { className?: string }) {
@@ -59,6 +64,10 @@ export function SearchSection({
   onSortChange,
   onClearFilters,
   onAddClick,
+  showAddButton = true,
+  hideTitle = false,
+  hideThemeToggle = false,
+  showModeTabs = false,
 }: SearchSectionProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -181,17 +190,29 @@ export function SearchSection({
     <section
       className="relative flex flex-col items-center px-4 pt-6 pb-4 sm:px-6 sm:pt-8"
     >
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
-        <ThemeToggle />
-      </div>
+      {!hideThemeToggle && (
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <ThemeToggle />
+        </div>
+      )}
 
       <div className="w-full max-w-2xl space-y-4">
-        <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-          QuoteVault
-        </h1>
-        <p className="text-center text-sm text-[var(--muted)]">
-          Store, browse, and search your personal quotes
-        </p>
+        {!hideTitle && (
+          <>
+            <h1 className="text-center font-serif text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
+              QuoteVault
+            </h1>
+            <p className="text-center text-sm text-[var(--muted)]">
+              Store, browse, and search your personal quotes
+            </p>
+          </>
+        )}
+
+        {showModeTabs && (
+          <div className="mb-2">
+            <VisitorModeTabs />
+          </div>
+        )}
 
         <div className="relative flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
@@ -392,13 +413,15 @@ export function SearchSection({
             </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onAddClick}
-            className="rounded-xl border-2 border-[var(--border)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--foreground)]/30 hover:bg-[var(--border)]/30 whitespace-nowrap"
-          >
-            Add Quote
-          </button>
+          {showAddButton && onAddClick && (
+            <button
+              type="button"
+              onClick={onAddClick}
+              className="rounded-xl border-2 border-[var(--border)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--foreground)] transition hover:border-[var(--foreground)]/30 hover:bg-[var(--border)]/30 whitespace-nowrap"
+            >
+              Add Quote
+            </button>
+          )}
         </div>
       </div>
     </section>

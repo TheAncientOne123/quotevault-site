@@ -6,6 +6,7 @@ import {
   sanitizeAuthor,
   parseHashtags,
 } from "@/lib/sanitize";
+import { getSession } from "@/lib/auth/session";
 import { z } from "zod";
 
 const updateQuoteSchema = z.object({
@@ -16,11 +17,15 @@ const updateQuoteSchema = z.object({
   hashtags: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
-// PATCH /api/quotes/:id
+// PATCH /api/quotes/:id (admin only)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = getSession(request.headers.get("cookie"));
+  if (!session?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const body = await request.json();
@@ -98,11 +103,15 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/quotes/:id
+// DELETE /api/quotes/:id (admin only)
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = getSession(request.headers.get("cookie"));
+  if (!session?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { id } = await params;
     const existing = await prisma.quote.findUnique({ where: { id } });

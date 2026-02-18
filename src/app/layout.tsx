@@ -3,6 +3,7 @@ import { Source_Serif_4, DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const sourceSerif = Source_Serif_4({
   variable: "--font-serif-display",
@@ -35,7 +36,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
         <Toaster richColors position="top-center" />
       </body>
     </html>

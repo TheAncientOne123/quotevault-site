@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import type { QuoteCard as QuoteCardType } from "@/types/quote";
 
 interface QuoteDetailModalProps {
@@ -9,6 +10,7 @@ interface QuoteDetailModalProps {
   onClose: () => void;
   onDelete?: (id: string) => void;
   onEdit?: (quote: QuoteCardType) => void;
+  readOnly?: boolean;
 }
 
 function formatDate(iso: string): string {
@@ -36,6 +38,7 @@ export function QuoteDetailModal({
   onClose,
   onDelete,
   onEdit,
+  readOnly = false,
 }: QuoteDetailModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevActiveRef = useRef<HTMLElement | null>(null);
@@ -96,20 +99,30 @@ export function QuoteDetailModal({
     }
   };
 
-  const content = quote ? (
-    <>
-      <div
-        className="fixed inset-0 z-50 bg-black/50 transition-opacity duration-150"
-        onClick={handleBackdropClick}
-        aria-hidden="true"
-      />
-      <div
-        ref={panelRef}
-        className="fixed inset-4 z-50 flex flex-col overflow-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-2xl sm:inset-8 sm:mx-auto sm:max-w-2xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="quote-detail-title"
-      >
+  const content = (
+    <AnimatePresence>
+      {quote && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={handleBackdropClick}
+            aria-hidden="true"
+          />
+          <motion.div
+            ref={panelRef}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="fixed inset-4 z-50 flex flex-col overflow-auto rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-2xl sm:inset-8 sm:mx-auto sm:max-w-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quote-detail-title"
+          >
             <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] p-6">
               <h2
                 id="quote-detail-title"
@@ -173,7 +186,7 @@ export function QuoteDetailModal({
               >
                 Copy
               </button>
-              {onEdit && (
+              {!readOnly && onEdit && (
                 <button
                   type="button"
                   onClick={() => {
@@ -185,7 +198,7 @@ export function QuoteDetailModal({
                   Edit
                 </button>
               )}
-              {onDelete && (
+              {!readOnly && onDelete && (
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -195,9 +208,11 @@ export function QuoteDetailModal({
                 </button>
               )}
             </div>
-      </div>
-    </>
-  ) : null;
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
 
   if (typeof document === "undefined") return null;
   return createPortal(content, document.body);
